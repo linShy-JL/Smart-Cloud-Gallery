@@ -1,0 +1,77 @@
+# 依赖文件夹
+node_modules/
+jspm_packages/
+
+# 构建输出
+dist/
+build/
+out/
+.cache/
+.next/
+.nuxt/
+.svelte-kit/
+.storybook-out/
+tmp/
+temp/
+
+# 生产环境打包文件
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 覆盖率和测试报告
+coverage/
+*.lcov
+
+# 本地环境变量
+.env
+.env.local
+.env.*.local
+
+# 依赖锁文件（可选忽略，若团队不锁定版本）
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Maven/Java（如果是前后端混合项目）
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
