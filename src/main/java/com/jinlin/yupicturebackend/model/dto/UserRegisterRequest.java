@@ -16,14 +16,14 @@ public class UserRegisterRequest implements Serializable {
     /**
      * 用户账号
      */
-    private final String userAccount;
+    private String userAccount;
     /**
      * 用户密码
      */
-    private final String userPassword;
+    private String userPassword;
     /**
      * 确认密码
      */
-    private final String checkPassword;
+    private String checkPassword;
 
 }
