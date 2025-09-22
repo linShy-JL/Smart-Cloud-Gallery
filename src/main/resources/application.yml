@@ -8,7 +8,7 @@ spring:
     #数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/jinlin_picture
+    url: jdbc:mysql://localhost:3306/lin_picture
     username: root
     password: wjl315698
 mybatis-plus:

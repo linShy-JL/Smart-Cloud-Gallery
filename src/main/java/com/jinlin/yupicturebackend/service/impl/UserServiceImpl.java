@@ -1,13 +1,16 @@
 package com.jinlin.yupicturebackend.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jinlin.yupicturebackend.exception.BusinessException;
 import com.jinlin.yupicturebackend.exception.ErrorCode;
 import com.jinlin.yupicturebackend.model.entity.User;
+import com.jinlin.yupicturebackend.model.enums.UserRoleEnum;
 import com.jinlin.yupicturebackend.service.UserService;
 import com.jinlin.yupicturebackend.mapper.UserMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 
 /**
 * @author Lenovo
@@ -40,9 +43,38 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             throw  new BusinessException(ErrorCode.PARAMS_ERROR,"两次输入的密码不一致");
         }
         //2.检查用户账户在数据库中是否有重复
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userAccount",userAccount);
+        long count = this.count(queryWrapper);
+        if(count>0){
+            throw  new BusinessException(ErrorCode.PARAMS_ERROR,"用户账户重复");
+        }
         //3.密码一定要加密
+        String encryptPassword = getEncryptPassword(userPassword);
         //4.存入数据库当中
-        return 0;
+        User user = new User();
+        user.setUserAccount(userAccount);
+        user.setUserPassword(encryptPassword);
+        user.setUserName("无名");
+        user.setUserRole(UserRoleEnum.USER.getValue());
+        boolean isSave = this.save(user);
+        if(!isSave){
+            throw  new BusinessException(ErrorCode.SYSTEM_ERROR,"注册失败，数据库错误");
+        }
+        //id mybatisplus已经帮我们做了，主键回填
+        return user.getId();
+    }
+
+    /**
+     * 获取加密后的密码
+     * @param userPassword
+     * @return
+     */
+    @Override
+    public String getEncryptPassword(String userPassword){
+        //加盐，混淆密码
+        final String SLAT="jinlin";
+        return DigestUtils.md5DigestAsHex((userPassword+SLAT).getBytes());
     }
 }
 

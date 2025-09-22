@@ -18,4 +18,11 @@ public interface UserService extends IService<User> {
      * @return 新用户id
      */
     long userRegister(String userAccount, String userPassword, String checkPassword);
+    /**
+     * 获取加密密码
+     *
+     * @param userPassword
+     * @return
+     */
+    String getEncryptPassword(String userPassword);
 }
