@@ -6,12 +6,10 @@ import com.jinlin.yupicturebackend.exception.ErrorCode;
 import com.jinlin.yupicturebackend.exception.ThrowUtils;
 import com.jinlin.yupicturebackend.model.dto.UserLoginRequest;
 import com.jinlin.yupicturebackend.model.dto.UserRegisterRequest;
+import com.jinlin.yupicturebackend.model.entity.User;
 import com.jinlin.yupicturebackend.model.vo.LoginUserVO;
 import com.jinlin.yupicturebackend.service.UserService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -43,5 +41,25 @@ public class UserController {
         String userPassword = userLoginRequest.getUserPassword();
         LoginUserVO loginUserVO = userService.userLogin(userAccount, userPassword, request);
         return ResultUtils.success(loginUserVO);
+    }
+    /**
+     * 获取当前登录用户
+     */
+    @GetMapping("/get/login")
+    public BaseResponse<LoginUserVO> getLoginUser(HttpServletRequest request) {
+        User loginUserVO = userService.getLoginUser(request);
+        //对得到的数据进行一个封装，返回一个脱敏后的用户信息
+        return ResultUtils.success(userService.getLoginUserVO(loginUserVO));
+    }
+    /**
+     * 用户注销（退出登录）
+     * @param request
+     */
+    @PostMapping("/logout")
+    public BaseResponse<Boolean> userLogin(HttpServletRequest request) {
+        //1.判断request是否为空
+        ThrowUtils.throwIf(request == null, ErrorCode.PARAMS_ERROR);
+        boolean result = userService.userLogout(request);
+        return ResultUtils.success(result);
     }
 }

@@ -107,6 +107,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return this.getLoginUserVO(user);
     }
 
+    @Override
+    public User getLoginUser(HttpServletRequest request) {
+        //1.获取当前登录用户
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        //2.判断当前用户是否已经登录
+        User currentUser = (User) userObj;
+        if(currentUser== null||currentUser.getId()== null){
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        //3.从数据库再查询一次（有可能出现用户被删除的问题）  为了保险
+        Long userId = currentUser.getId();
+        currentUser= this.getById(userId);
+        if(currentUser==null){
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        return currentUser;
+    }
+
     /**
      * 获取加密后的密码
      * @param userPassword  用户密码
@@ -131,6 +149,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         LoginUserVO loginUserVO = new LoginUserVO();
         BeanUtil.copyProperties(user,loginUserVO);
         return loginUserVO;
+    }
+
+    @Override
+    public boolean userLogout(HttpServletRequest request) {
+        //1.获取当前登录用户
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        //2.判断当前用户是否已经登录
+        if(userObj==null){
+            //如果未登录
+            throw new BusinessException(ErrorCode.OPERATION_ERROR,"未登录");
+        }
+        //3.在session中移除单前用户的登录信息
+        request.getSession().removeAttribute(USER_LOGIN_STATE);
+        return true;
     }
 }
 
