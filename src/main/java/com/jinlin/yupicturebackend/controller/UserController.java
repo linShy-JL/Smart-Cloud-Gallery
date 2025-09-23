@@ -1,12 +1,15 @@
 package com.jinlin.yupicturebackend.controller;
 
+import com.jinlin.yupicturebackend.annotation.AuthCheck;
 import com.jinlin.yupicturebackend.common.BaseResponse;
 import com.jinlin.yupicturebackend.common.ResultUtils;
+import com.jinlin.yupicturebackend.constant.UserConstant;
 import com.jinlin.yupicturebackend.exception.ErrorCode;
 import com.jinlin.yupicturebackend.exception.ThrowUtils;
 import com.jinlin.yupicturebackend.model.dto.UserLoginRequest;
 import com.jinlin.yupicturebackend.model.dto.UserRegisterRequest;
 import com.jinlin.yupicturebackend.model.entity.User;
+import com.jinlin.yupicturebackend.model.enums.UserRoleEnum;
 import com.jinlin.yupicturebackend.model.vo.LoginUserVO;
 import com.jinlin.yupicturebackend.service.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -56,7 +59,7 @@ public class UserController {
      * @param request
      */
     @PostMapping("/logout")
-    public BaseResponse<Boolean> userLogin(HttpServletRequest request) {
+    public BaseResponse<Boolean> userLogOut(HttpServletRequest request) {
         //1.判断request是否为空
         ThrowUtils.throwIf(request == null, ErrorCode.PARAMS_ERROR);
         boolean result = userService.userLogout(request);
