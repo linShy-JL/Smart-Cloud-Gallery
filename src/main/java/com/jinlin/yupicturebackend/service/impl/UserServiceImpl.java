@@ -1,16 +1,21 @@
 package com.jinlin.yupicturebackend.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jinlin.yupicturebackend.constant.UserConstant;
 import com.jinlin.yupicturebackend.exception.BusinessException;
 import com.jinlin.yupicturebackend.exception.ErrorCode;
+import com.jinlin.yupicturebackend.model.dto.user.UserQueryRequest;
 import com.jinlin.yupicturebackend.model.entity.User;
 import com.jinlin.yupicturebackend.model.enums.UserRoleEnum;
 import com.jinlin.yupicturebackend.model.vo.LoginUserVO;
+import com.jinlin.yupicturebackend.model.vo.UserVO;
 import com.jinlin.yupicturebackend.service.UserService;
 import com.jinlin.yupicturebackend.mapper.UserMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +23,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.jinlin.yupicturebackend.constant.UserConstant.USER_LOGIN_STATE;
 
@@ -150,6 +159,35 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         BeanUtil.copyProperties(user,loginUserVO);
         return loginUserVO;
     }
+    /**
+     * 获取脱敏类的用户信息
+     * @param user  用户
+     * @return   获取脱敏后的用户信息
+     */
+    @Override
+    public UserVO getUserVO(User user) {
+        if(user==null){
+            return null;
+        }
+        UserVO userVO = new UserVO();
+        BeanUtil.copyProperties(user,userVO);
+        return userVO;
+    }
+    /**
+     * 获取脱敏类的用户列表
+     * @param userList  用户列表
+     * @return  返回脱敏后的用户列表
+     */
+    @Override
+    public List<UserVO> getUserVOList(List<User> userList) {
+        if(CollUtil.isEmpty(userList)){
+            return new ArrayList<>();
+        }
+        List<UserVO> userVOList = userList.stream()
+                .map(this::getUserVO)
+                .collect(Collectors.toList());
+        return userVOList;
+    }
 
     @Override
     public boolean userLogout(HttpServletRequest request) {
@@ -163,6 +201,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         //3.在session中移除单前用户的登录信息
         request.getSession().removeAttribute(USER_LOGIN_STATE);
         return true;
+    }
+
+    @Override
+    public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
+        if (userQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
+        }
+        Long id = userQueryRequest.getId();
+        String userName = userQueryRequest.getUserName();
+        String userAccount = userQueryRequest.getUserAccount();
+        String userProfile = userQueryRequest.getUserProfile();
+        String userRole = userQueryRequest.getUserRole();
+        String sortField = userQueryRequest.getSortField();
+        String sortOrder = userQueryRequest.getSortOrder();
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(ObjUtil.isNotNull(id), "id", id);
+        queryWrapper.eq(StrUtil.isNotBlank(userRole), "userRole", userRole);
+        //使用like进行模糊查询
+        queryWrapper.like(StrUtil.isNotBlank(userAccount), "userAccount", userAccount);
+        queryWrapper.like(StrUtil.isNotBlank(userName), "userName", userName);
+        queryWrapper.like(StrUtil.isNotBlank(userProfile), "userProfile", userProfile);
+        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals("ascend"), sortField);
+        return queryWrapper;
     }
 }
 
