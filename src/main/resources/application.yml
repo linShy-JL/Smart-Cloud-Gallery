@@ -33,3 +33,10 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.jinlin.yupicturebackend.controller
+#对象存储配置
+  #阿里云oss配置
+alioss:
+  endpoint: ${sky.alioss.endpoint}
+  access-key-id: ${sky.alioss.access-key-id}
+  access-key-secret: ${sky.alioss.access-key-secret}
+  bucket-name: ${sky.alioss.bucket-name}
