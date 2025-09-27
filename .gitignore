@@ -1,4 +1,4 @@
-### Custom ###
+# 忽略本地配置文件
 application-local.yml
 # 依赖文件夹
 node_modules/
