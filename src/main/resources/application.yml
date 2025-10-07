@@ -13,6 +13,10 @@ spring:
     url: jdbc:mysql://localhost:3306/lin_picture
     username: root
     password: wjl315698
+    #开放更大的文件上传体积
+  servlet:
+    multipart:
+      max-file-size: 10MB
 mybatis-plus:
   configuration:
     # MyBatis 配置

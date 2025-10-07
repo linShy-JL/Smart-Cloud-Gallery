@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration
+@Configuration    //表示它是一个配置文件
 @ConfigurationProperties(prefix = "cos.client")
 @Data
 public class CosClientConfig {
@@ -52,6 +52,7 @@ public class CosClientConfig {
         // 如果需要的话，设置 http 代理，ip 以及 port
         // clientConfig.setHttpProxyIp("httpProxyIp");
         // clientConfig.setHttpProxyPort(80);
+        //可以不用写，一般都是HTTPS协议
         clientConfig.setHttpProtocol(HttpProtocol.https);
         // 生成 cos 客户端。
         return new COSClient(cred, clientConfig);

@@ -41,9 +41,10 @@ public class FileController {
         String filePath=String.format("/test/%s", fileName);
         File file=null;
         try {
-            //创建一个临时文件，用来保存前端上传的文件
-            file=File.createTempFile(fileName, null);
+            //创建一个临时文件,用来将multipartFile对象转换成File对象（在Tomcat中创建一个临时文件）
+            file=File.createTempFile(filePath, null);
             multipartFile.transferTo(file);
+            //文件接受的是一个File类型的对象,所以要把MultipartFile对象转换成File对象
             cosManager.putObject(filePath, file);
             //返回可访问的路径
             return ResultUtils.success(filePath);
@@ -53,8 +54,8 @@ public class FileController {
         }finally {
             //每次上传文件都会在本地创建一个临时文件，所以当文件上传到远程后要删除临时文件
             if(file!=null){
-                boolean deleten=file.delete();
-                if(!deleten){
+                boolean delete=file.delete();
+                if(!delete){
                     log.error("file delete error,filepath={}", filePath);
                 }
             }
@@ -68,17 +69,18 @@ public class FileController {
      */
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @GetMapping("/test/download/")
+    //因为我们自己要控制图片的下载，我们自己要控制接口的返回，所以啊要返回一个response对象
     public void testDownloadFile(String filePath, HttpServletResponse response) throws IOException {
         COSObjectInputStream cosObjectInput =null;
         try {
             COSObject cosObject = cosManager.getObject(filePath);
             cosObjectInput=cosObject.getObjectContent();
-            byte[] byteArray = IOUtils.toByteArray(cosObjectInput);
+            byte[] bytes = IOUtils.toByteArray(cosObjectInput);
             //设置响应头
             response.setContentType("application/octet-stream;charset=UTF-8");
             response.setHeader("Content-Disposition", "attachment;filename=" + filePath);
             //写入响应头
-            response.getOutputStream().write(byteArray);
+            response.getOutputStream().write(bytes);
             //进行刷新
             response.getOutputStream().flush();
         } catch (Exception e) {
