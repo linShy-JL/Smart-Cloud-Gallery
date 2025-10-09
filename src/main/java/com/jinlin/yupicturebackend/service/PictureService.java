@@ -3,6 +3,7 @@ package com.jinlin.yupicturebackend.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jinlin.yupicturebackend.model.dto.picture.PictureQueryRequest;
+import com.jinlin.yupicturebackend.model.dto.picture.PictureReviewRequest;
 import com.jinlin.yupicturebackend.model.dto.picture.PictureUploadRequest;
 import com.jinlin.yupicturebackend.model.dto.user.UserQueryRequest;
 import com.jinlin.yupicturebackend.model.entity.Picture;
@@ -56,4 +57,13 @@ public interface PictureService extends IService<Picture> {
      * @param picture
      */
     void validPicture(Picture picture);
+
+    /**
+     * 图片审核
+     * @param pictureReviewRequest
+     * @param loginUser
+     */
+    void doPictureReview (PictureReviewRequest pictureReviewRequest, User loginUser);
+
+    void fillReviewParams(Picture pictur, User loginUser);
 }
