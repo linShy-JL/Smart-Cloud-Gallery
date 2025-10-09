@@ -11,6 +11,9 @@ import com.jinlin.yupicturebackend.exception.ErrorCode;
 import com.jinlin.yupicturebackend.exception.ThrowUtils;
 import com.jinlin.yupicturebackend.manager.CosManager;
 import com.jinlin.yupicturebackend.manager.FileManager;
+import com.jinlin.yupicturebackend.manager.upload.FilePictureUpload;
+import com.jinlin.yupicturebackend.manager.upload.PictureUploadTemplate;
+import com.jinlin.yupicturebackend.manager.upload.UrlPictureUpload;
 import com.jinlin.yupicturebackend.mapper.PictureMapper;
 import com.jinlin.yupicturebackend.model.dto.file.UploadPictureResult;
 import com.jinlin.yupicturebackend.model.dto.picture.PictureQueryRequest;
@@ -46,11 +49,17 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
     @Resource
     private UserService userService;
 
-    @Autowired
+    @Resource
     private CosManager cosManager;
 
+    @Resource
+    private UrlPictureUpload urlPictureUpload;
+
+    @Resource
+    private FilePictureUpload filePictureUpload;
+
     @Override
-    public PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser) {
+    public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
         //校验参数
         ThrowUtils.throwIf(loginUser==null, ErrorCode.NO_AUTH_ERROR);
         //判断是新增还上传
@@ -72,7 +81,12 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         //上传图片,得到图片信息
         //按照用户ID划分目录
         String uploadPathPrefix=String.format("public/%s", loginUser.getId());
-        UploadPictureResult uploadPictureResult = fileManager.uploadPicture(multipartFile, uploadPathPrefix);
+        //根据inputSource判断是上传文件还是上传URL
+        PictureUploadTemplate pictureUploadTemplate = filePictureUpload;
+        if(inputSource instanceof String){
+            pictureUploadTemplate = urlPictureUpload;
+        }
+        UploadPictureResult uploadPictureResult = pictureUploadTemplate.uploadPicture(inputSource, uploadPathPrefix);
         //构造要入库的图片信息
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());

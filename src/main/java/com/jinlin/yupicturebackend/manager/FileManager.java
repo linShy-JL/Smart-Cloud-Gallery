@@ -26,8 +26,13 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * 文件服务
+ * @Deprecated 表示已废弃，改为使用upload模版包的方法
+ */
 @Slf4j
 @Service    //有点偏业务层，所以打上Service注解
+@Deprecated
 public class FileManager {
     @Resource
     private CosClientConfig cosClientConfig;
@@ -142,6 +147,7 @@ public class FileManager {
         try {
             // 上传文件
             file = File.createTempFile(uploadPath, null);
+            //todo
             //multipartFile.transferTo(file);
             //下载文件
             HttpUtil.downloadFile(fileUrl,file);
