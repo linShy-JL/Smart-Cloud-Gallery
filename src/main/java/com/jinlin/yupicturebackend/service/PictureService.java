@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jinlin.yupicturebackend.model.dto.picture.PictureQueryRequest;
 import com.jinlin.yupicturebackend.model.dto.picture.PictureReviewRequest;
+import com.jinlin.yupicturebackend.model.dto.picture.PictureUploadByBatchRequest;
 import com.jinlin.yupicturebackend.model.dto.picture.PictureUploadRequest;
 import com.jinlin.yupicturebackend.model.dto.user.UserQueryRequest;
 import com.jinlin.yupicturebackend.model.entity.Picture;
@@ -70,4 +71,12 @@ public interface PictureService extends IService<Picture> {
      * @param loginUser
      */
     void fillReviewParams(Picture picture, User loginUser);
+
+    /**
+     * 批量抓取和创建图片
+     * @param pictureUploadByBatchRequest
+     * @param loginUser
+     * @return
+     */
+     Integer uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser);
 }
