@@ -1,8 +1,11 @@
 package com.jinlin.yupicturebackend.controller;
 
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.jinlin.yupicturebackend.annotation.AuthCheck;
 import com.jinlin.yupicturebackend.common.BaseResponse;
 import com.jinlin.yupicturebackend.common.DeleteRequest;
@@ -23,15 +26,19 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.bytebuddy.implementation.bytecode.Throw;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RestController
@@ -43,6 +50,19 @@ public class PictureController {
     @Resource
     private PictureService pictureService;
 
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+    /**
+     * 本地缓存
+     */
+    private final Cache<String, String> LOCAL_CACHE = Caffeine.newBuilder()
+            .initialCapacity(1024)
+            .maximumSize(10_000L) // 最大 10000 条
+            // 缓存 5 分钟后移除
+            .expireAfterWrite(Duration.ofMinutes(5))
+            .build();
+
+    /**
     /*
     上传图片（可重复上传）
      */
@@ -172,6 +192,42 @@ public class PictureController {
         //查询数据库
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
                 pictureService.getQueryWrapper(pictureQueryRequest));
+        //获取封装类
+        return ResultUtils.success(pictureService.getPictureVOPage(picturePage, request));
+    }
+    /**
+     * 分页获取图片列表（封装类）
+     */
+    @PostMapping("/list/page/vo/cache")
+    public BaseResponse<Page<PictureVO>> listPictureVOByPageWithCache(@RequestBody PictureQueryRequest pictureQueryRequest,HttpServletRequest  request){
+        long current = pictureQueryRequest.getCurrent();
+        long size = pictureQueryRequest.getPageSize();
+        //限制爬虫
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        //普通用户默认只能看到审核通过的数据
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+        //查询缓存，如果缓存中没有
+        //构建查询的key(需要把前端传入的JSON类型的请求转换为String类型的)
+        String queryCondition = JSONUtil.toJsonStr(pictureQueryRequest);
+        //进行MD5加密
+        String hashKey= DigestUtils.md5DigestAsHex(queryCondition.getBytes());
+        //创建key
+        String key = String.format("linPicture:listPictureVOByPage:%S", hashKey);
+        ValueOperations<String, String> opsForValue= stringRedisTemplate.opsForValue();
+        String cachedValue = opsForValue.get(key);
+        if(cachedValue != null){
+            //如果缓存命中，返回缓存中的PageVo对象
+            Page<PictureVO> cachedPage  = JSONUtil.toBean(cachedValue, Page.class);
+            return ResultUtils.success(cachedPage);
+        }
+        //查询数据库
+        Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
+                pictureService.getQueryWrapper(pictureQueryRequest));
+        //将获取到的数据存入缓存
+        String cacheValue = JSONUtil.toJsonStr(picturePage);
+        //设置缓存过期时间5-10分钟（防止缓存雪崩，大量key在同一时间失效）
+        int cacheExpireTime=300+ RandomUtil.randomInt(0,300);    //5分钟=300秒
+        opsForValue.set(key, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
         //获取封装类
         return ResultUtils.success(pictureService.getPictureVOPage(picturePage, request));
     }
