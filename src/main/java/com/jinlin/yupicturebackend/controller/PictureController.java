@@ -1,6 +1,7 @@
 package com.jinlin.yupicturebackend.controller;
 
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -213,27 +214,35 @@ public class PictureController {
         String hashKey= DigestUtils.md5DigestAsHex(queryCondition.getBytes());
         //创建key
         String key = String.format("linPicture:listPictureVOByPage:%S", hashKey);
-//        ValueOperations<String, String> opsForValue= stringRedisTemplate.opsForValue();
-//        String cachedValue = opsForValue.get(key);
-        //在本地缓存中查询，是否存在缓存的图片
+        //1.在本地缓存中查询，是否存在缓存的图片
         String cachedValue = LOCAL_CACHE.getIfPresent(key);
         if(cachedValue != null){
-            //如果缓存命中，返回缓存中的PageVo对象
             Page<PictureVO> cachedPage  = JSONUtil.toBean(cachedValue, Page.class);
             return ResultUtils.success(cachedPage);
         }
-        //查询数据库
+        //2.本地缓未命中，则从Redis中查询
+        ValueOperations<String, String> opsForValue= stringRedisTemplate.opsForValue();
+        cachedValue = opsForValue.get(key);
+        if(cachedValue != null){
+            //如果redis缓存命中，更新本地缓存
+            LOCAL_CACHE.put(key, cachedValue);
+            Page<PictureVO> cachedPage = JSONUtil.toBean(cachedValue, Page.class);
+            return ResultUtils.success(cachedPage);
+        }
+        //3.查询数据库
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
                 pictureService.getQueryWrapper(pictureQueryRequest));
+        Page<PictureVO> pictureVO = pictureService.getPictureVOPage(picturePage, request);
         //将获取到的数据存入缓存
         String cacheValue = JSONUtil.toJsonStr(picturePage);
         //设置缓存过期时间5-10分钟（防止缓存雪崩，大量key在同一时间失效）
         int cacheExpireTime=300+ RandomUtil.randomInt(0,300);    //5分钟=300秒
-//        opsForValue.set(key, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
+        //3.缓存未命中，则将数据存入redis缓存
+        opsForValue.set(key, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
         //写入本地缓存
         LOCAL_CACHE.put(key, cacheValue);
         //获取封装类
-        return ResultUtils.success(pictureService.getPictureVOPage(picturePage, request));
+        return ResultUtils.success(pictureVO);
     }
     /**
      * 编辑图片（给用户使用）
