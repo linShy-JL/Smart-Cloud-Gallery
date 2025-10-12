@@ -213,8 +213,10 @@ public class PictureController {
         String hashKey= DigestUtils.md5DigestAsHex(queryCondition.getBytes());
         //创建key
         String key = String.format("linPicture:listPictureVOByPage:%S", hashKey);
-        ValueOperations<String, String> opsForValue= stringRedisTemplate.opsForValue();
-        String cachedValue = opsForValue.get(key);
+//        ValueOperations<String, String> opsForValue= stringRedisTemplate.opsForValue();
+//        String cachedValue = opsForValue.get(key);
+        //在本地缓存中查询，是否存在缓存的图片
+        String cachedValue = LOCAL_CACHE.getIfPresent(key);
         if(cachedValue != null){
             //如果缓存命中，返回缓存中的PageVo对象
             Page<PictureVO> cachedPage  = JSONUtil.toBean(cachedValue, Page.class);
@@ -227,7 +229,9 @@ public class PictureController {
         String cacheValue = JSONUtil.toJsonStr(picturePage);
         //设置缓存过期时间5-10分钟（防止缓存雪崩，大量key在同一时间失效）
         int cacheExpireTime=300+ RandomUtil.randomInt(0,300);    //5分钟=300秒
-        opsForValue.set(key, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
+//        opsForValue.set(key, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
+        //写入本地缓存
+        LOCAL_CACHE.put(key, cacheValue);
         //获取封装类
         return ResultUtils.success(pictureService.getPictureVOPage(picturePage, request));
     }
